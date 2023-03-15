@@ -1,0 +1,66 @@
+import cv2
+from statistics import mean
+import numpy as np
+import serial
+import time
+
+# captures video through webcam
+cap = cv2.VideoCapture(0)
+# sets video dimensions
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+#sets up serial communication link
+ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1.0)
+time.sleep(3)
+ser.reset_input_buffer()
+
+while True:
+    # frame is the image
+    _, frame = cap.read()
+
+    cropped_frame = frame[400:700 , 750:1050]
+
+
+
+    red_array = []
+    red_array.append(200)
+
+    for x in range(0,299):
+        for y in range(0,299):
+
+            if (cropped_frame[x,y][0] < 150) and (cropped_frame[x,y][1] < 150):
+                red_array.append(cropped_frame[x,y][2])
+
+
+
+    red_avg = mean(red_array)
+
+
+
+    color = "UNDEFINED"
+    
+
+    if red_avg > 150:
+        color = "red"
+        
+    if red_avg < 80:
+        color = "black"
+
+    if color == "red":
+        ser.write("r\n".encode('utf-8'))
+    if color == "black":
+        ser.write("b\n".encode('utf-8'))
+    
+    print(red_avg)
+    print(color)
+    time.sleep(1)
+    cv2.imshow(" Cropped Frame", cropped_frame)
+
+
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+
+    #
+cap.release()
+cv2.destroyAllWindows()
